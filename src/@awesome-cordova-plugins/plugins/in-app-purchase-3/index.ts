@@ -8,7 +8,6 @@ export interface IAPAdapter {
 
   ready: boolean;
 
-  products: IAPProduct[];
 
   receipts: IAPReceipt[];
 
@@ -16,24 +15,16 @@ export interface IAPAdapter {
 
   initialize(): Promise<IAPError | undefined>;
 
-  loadProducts(products: IAPProductOptions[]): Promise<(IAPProduct | IAPError)[]>;
 
   loadReceipts(): Promise<IAPReceipt[]>;
 
   supportsParallelLoading: boolean;
 
-  order(offer: IAPOffer, additionalData: IAPAdditionalData): Promise<IAPError | undefined>;
 
   finish(transaction: IAPTransaction): Promise<IAPError | undefined>;
 
-  receiptValidationBody(receipt: IAPReceipt): Promise<object | undefined>;
 
-  handleReceiptValidationResponse(receipt: IAPReceipt, response: object): Promise<void>;
 
-  requestPayment(
-    payment: PaymentRequest,
-    additionalData?: IAPAdditionalData
-  ): Promise<IAPError | IAPTransaction | undefined>;
 
   manageSubscriptions(): Promise<IAPError | undefined>;
 
@@ -53,25 +44,8 @@ export interface IAPProductOptions {
   group?: string;
 }
 
-/**
- * Data to attach to a transaction.
- * @see {@link IAPOffer.order}
- * @see {@link InAppPurchase3.requestPayment}
- */
-export interface IAPAdditionalData {
-  /** The application's user identifier, will be obfuscated with md5 to fill `accountId` if necessary */
-  applicationUsername?: string;
-
-  /** GooglePlay specific additional data. See cordova-plugin-purchase documentation.*/
-  googlePlay?: object;
-
-  /** Braintree specific additional data. See cordova-plugin-purchase documentation.*/
-  braintree?: object;
-
-  /** Apple AppStore specific additional data. See cordova-plugin-purchase documentation.*/
-  appStore?: object;
-}
-
+  /**
+   */
 export type Callback<T> = (t: T) => void;
 
 export interface IAPProduct {
@@ -119,7 +93,6 @@ export interface IAPOffer {
    * @example
    * store.get("my-product").getOffer().order();
    */
-  order(additionnalData?: IAPAdditionalData): Promise<IAPError | undefined>;
 }
 export interface IAPPricingPhase {
   price: string;
