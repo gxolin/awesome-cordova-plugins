@@ -248,6 +248,8 @@ export class IAPError {
  *  - **macOS** version 10
  *  - **Xbox One**
  *    - (and any platform supporting Microsoft's UWP)
+ *  - **cordova-plugin-purchase** version 12 or lower. For versions 13 and higher, use plugin InAppPurchase3 instead
+ * @see https://github.com/j3k0/cordova-plugin-purchase/wiki/HOWTO:-Migrate-to-v13
  * @usage
  * ```typescript
  * import { InAppPurchase2 } from '@awesome-cordova-plugins/in-app-purchase-2/ngx';

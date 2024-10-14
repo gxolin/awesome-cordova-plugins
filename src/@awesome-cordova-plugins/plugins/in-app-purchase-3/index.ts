@@ -518,7 +518,7 @@ export class IAPError {
 }
 
 /**
- * @name In App Purchase 3
+ * @name "In App Purchase 3"
  * @description
  * In-App Purchase on iOS, Android, Windows, macOS and XBox.
  *
@@ -534,7 +534,7 @@ export class IAPError {
  * | subscriptions | ✅ | ✅ | ✅ | ✅ | ✅ |
  * | restore purchases | ✅ | ✅ | ✅ | ✅ | ✅ |
  * | receipt validations | ✅ | ✅ |  | ✅ | ✅ |
- * | downloadable content | ✅ |   |   |   | ✅ |
+ * | downloadable content |   |   |   |   |   |
  * | introductory prices | ✅ | ✅ |   | ✅ | ✅ |
  *
  * Supports:
@@ -562,14 +562,14 @@ export class IAPError {
  *    this.store.when()
  *      .approved(p => p.verify())
  *      .verified(p => p.finish());
- *    this.store.refresh();
+ *    this.store.initialize();
+ *    this.store.update();
  *   });
  * }
  *
  * ...
- *
- * this.store.order("my_product_id");
- *
+ * const product = this.store.get("my_product_id", Platform.TEST);
+ * store.order(product.getOffer()); // or product.getOffer().order();
  * ```
  *
  * ## Full example
@@ -610,13 +610,17 @@ export class IAPError {
  *    console.log(JSON.stringify(this.store.get("my_product_id")));
  *  });
  *
- *  // Refresh the status of in-app products
- *  this.store.refresh();
+ *  // initialize the plugin
+ *  this.store.initialize();
+ *
+ *  // refresh product prices and status of purchases
+ *  this.store.update();
  *
  *  ...
  *
  *  // To make a purchase
- *  this.store.order("my_product_id");
+ * const product = this.store.get("my_product_id", Platform.TEST);
+ * store.order(product.getOffer()); // or product.getOffer().order();
  *
  * ```
  *
@@ -632,7 +636,6 @@ export class IAPError {
  *  this.store.when().updated(refreshScreen); // match any product
  *  this.store.when().owned(unlockApp); // match a specific product
  *  this.store.when().approved(serverCheck); // match all subscriptions
- *  this.store.when().downloaded(showContent);
  * ```
  *
  * The `updated` event is fired whenever one of the fields of a product is
@@ -646,7 +649,7 @@ export class IAPError {
  * The store needs to know the type and identifiers of your products before you
  * can use them in your code.
  *
- * Use `store.register()` to define them before your first call to `store.refresh()`.
+ * Use `store.register()` to define them before your first call to `store.initialize()`.
  *
  * Once registered, you can use `store.get()` to retrieve an `IAPProduct` object.
  *
@@ -688,7 +691,7 @@ export class IAPError {
  *
  * #### initiate a purchase
  *
- * Purchases are initiated using the `store.order("some_product_id")` method.
+ * Purchases are initiated using the `store.order(offer)` method.
  *
  * The store will manage the internal purchase flow. It'll end:
  *
@@ -718,7 +721,8 @@ export class IAPError {
  *
  * When the purchase button is clicked:
  * ```typescript
- * this.store.order("extra_chapter");
+ * const extraChapterProduct = this.store.get("extra_chapter");
+ * this.store.order(extraChapterProduct.getOffer());
  * ```
  *
  * #### un-finished purchases
@@ -726,7 +730,7 @@ export class IAPError {
  * If your app wasn't able to deliver the content, `product.finish()` won't be called.
  *
  * Don't worry: the `approved` event will be re-triggered the next time you
- * call `store.refresh()`, which can very well be the next time
+ * call `store.update()`, which can very well be the next time
  * the application starts. Pending transactions are persistant.
  *
  * #### simple case
@@ -740,8 +744,6 @@ export class IAPError {
  * ```js
  * this.store.when().approved((p: IAPProduct) => p.finish());
  * ```
- *
- * NOTE: the "product" query will match any purchases (see "queries" to learn more details about queries).
  *
  * ## Receipt validation
  *
@@ -843,10 +845,6 @@ export class IAPError {
  *    - Called when receipt verification failed
  *  - `expired(IAPProduct)`
  *    - Called when validation find a subscription to be expired
- *  - `downloading(IAPProduct, progress, time_remaining)`
- *    - Called when content download is started
- *  - `downloaded(IAPProduct)`
- *    - Called when content download has successfully completed
  *
  * ## Learn More
  *
@@ -992,10 +990,14 @@ export class InAppPurchase3 extends AwesomeCordovaNativePlugin {
 
   /**
    * Call to initialize the in-app purchase plugin.
-   * @param {(Platform | { platform: Platform; options?: object })[]} platforms - List of payment platforms to initialize, default to Store.defaultPlatform().
+   *
+   * @param platforms - List of payment platforms to initialize, default to Store.defaultPlatform().
+   * @return {Promise<IAPError[]>}
    */
   @Cordova({ sync: true })
-  initialize(platforms: (Platform | { platform: Platform; options?: object })[]): void {}
+  initialize(platforms: (Platform | { platform: Platform; options?: object })[]): Promise<IAPError[]> {
+    return;
+  }
 
   /**
    * Avoid invoking store.update() if the most recent call occurred within this specific number of milliseconds.
@@ -1120,8 +1122,8 @@ export class InAppPurchase3 extends AwesomeCordovaNativePlugin {
   }
 
   /**
-   * @param {{id: string, platform?: Platform} | string} product - The product object or identifier of the product.
-   * @returns {boolean} true if a product is owned
+   * @param product - The product object or identifier of the product.
+   * @returns true if a product is owned
    */
   @Cordova({ sync: true })
   owned(
@@ -1172,6 +1174,7 @@ export class InAppPurchase3 extends AwesomeCordovaNativePlugin {
 
   /**
    * Replay the users transactions.
+   *
    * This method exists to cover an Apple App Store requirement.
    */
   @Cordova({ sync: false })
@@ -1194,6 +1197,7 @@ export class InAppPurchase3 extends AwesomeCordovaNativePlugin {
 
   /**
    * Opens the billing methods page on App Store, Play, Microsoft, ...
+   *
    * From this page, the user can update their payment methods.
    * If platform is not specified, the first available platform will be used.
    * @example
@@ -1217,6 +1221,7 @@ export class InAppPurchase3 extends AwesomeCordovaNativePlugin {
 
   /**
    * Register an error handler.
+   *
    * @param {Callback<IAPError>} error An error callback that takes the error as an argument
    * @example
    * store.error(function(error) {
